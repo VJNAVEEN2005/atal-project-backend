@@ -16,6 +16,9 @@ connectDatabase()
 
 app.use(express.json())
 
+app.get('/', (req, res) => {
+    res.send('Express app running!');
+  });
 app.use('/api/v1', userRoute)
 
 

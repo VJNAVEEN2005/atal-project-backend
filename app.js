@@ -10,6 +10,7 @@ app.use(cors());
 dotenv.config({path: path.join(__dirname, 'config', 'config.env')})
 
 const userRoute = require('./routes/user')
+const tenderRoute = require('./routes/tender')
 
 
 connectDatabase()
@@ -20,6 +21,7 @@ app.get('/', (req, res) => {
     res.send('Express app running!');
   });
 app.use('/api/v1', userRoute)
+app.use('/api/v1', tenderRoute )
 
 
 

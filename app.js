@@ -11,6 +11,7 @@ dotenv.config({path: path.join(__dirname, 'config', 'config.env')})
 
 const userRoute = require('./routes/user')
 const tenderRoute = require('./routes/tender')
+const eventRoute = require('./routes/event')
 
 
 connectDatabase()
@@ -22,6 +23,7 @@ app.get('/', (req, res) => {
   });
 app.use('/api/v1', userRoute)
 app.use('/api/v1', tenderRoute )
+app.use('/api/v1', eventRoute)
 
 
 

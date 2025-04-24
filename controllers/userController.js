@@ -204,3 +204,55 @@ exports.updateUser = async (req, res, next) => {
       res.status(500).json({ success: false, message: "Internal Server Error" });
     }
   };
+
+  exports.getAllUsers = async (req, res, next) => {
+    try {
+      const users = await userModel.find().select('-password -confirmPassword');
+      
+      return res.status(200).json({
+        success: true,
+        message: "Users retrieved successfully",
+        users: users
+      });
+    } catch (err) {
+      console.error("Error getting users:", err);
+      res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+  };
+  
+  // Controller function to update admin status
+  exports.updateAdminStatus = async (req, res, next) => {
+    try {
+      const { _id, admin } = req.body;
+      
+      if (!_id) {
+        return res.status(400).json({ success: false, message: "User ID is required" });
+      }
+  
+      // Validate admin value is 0, 1, or 2
+      if (![0, 1, 2].includes(admin)) {
+        return res.status(400).json({ success: false, message: "Invalid admin level" });
+      }
+  
+      // Update user admin status
+      const updatedUser = await userModel.findByIdAndUpdate(
+        _id,
+        { admin: admin },
+        { new: true, runValidators: true }
+      ).select('-password -confirmPassword');
+      
+      if (!updatedUser) {
+        return res.status(404).json({ success: false, message: "User not found" });
+      }
+      
+      return res.status(200).json({
+        success: true,
+        message: "Admin status updated successfully",
+        user: updatedUser
+      });
+      
+    } catch (err) {
+      console.error("Error updating admin status:", err);
+      res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+  };

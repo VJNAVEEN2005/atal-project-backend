@@ -1,15 +1,34 @@
 const mongoose = require('mongoose');
 
 const tenderSchema = new mongoose.Schema({
-    title: String,
+    title: {
+        type: String,
+        required: true
+    },
     date: String,
-    organization: String,
+    organization: {
+        type: String,
+        required: true
+    },
     reference: String,
-    lastDate: String,
-    lastTime: String,
-    fileLink: String,
+    lastDate: {
+        type: String,
+        required: true
+    },
+    lastTime: {
+        type: String,
+        required: true
+    },
     fileName: String,
-},{ timestamps: true })
+    fileData: {
+        type: Buffer,
+        required: true
+    },
+    fileContentType: {
+        type: String,
+        default: 'application/pdf'
+    }
+}, { timestamps: true });
 
 const tenderModel = mongoose.model('Tender', tenderSchema);
 

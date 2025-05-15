@@ -1,5 +1,6 @@
 const multer = require('multer');
 const userModel = require('../models/userModel');
+const jwt = require("jsonwebtoken");
 
 // Configure multer for memory storage (this stores files in memory as Buffer objects)
 const storage = multer.memoryStorage();

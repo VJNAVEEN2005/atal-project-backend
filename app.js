@@ -17,6 +17,7 @@ const roadmapRoute = require('./routes/roadmap')
 const newsletterRoute = require('./routes/newsletter')
 const teamRoute = require('./routes/team')
 const startupRoute = require('./routes/startup')
+const partnerRoute = require('./routes/partner')
 
 
 connectDatabase()
@@ -34,6 +35,7 @@ app.use('/api/v1', roadmapRoute)
 app.use('/api/v1', newsletterRoute)
 app.use('/api/v1', teamRoute)
 app.use('/api/v1', startupRoute)
+app.use('/api/v1/partners', partnerRoute)
 
 
 app.listen(process.env.PORT, ()=>{

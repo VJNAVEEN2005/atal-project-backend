@@ -20,6 +20,7 @@ const teamRoute = require('./routes/team')
 const startupRoute = require('./routes/startup')
 const partnerRoute = require('./routes/partner')
 const carouselImage = require('./routes/carouselImage')
+const message = require('./routes/message')
 
 
 connectDatabase()
@@ -39,6 +40,7 @@ app.use('/api/v1', teamRoute)
 app.use('/api/v1', startupRoute)
 app.use('/api/v1/partners', partnerRoute)
 app.use('/api/v1', carouselImage)
+app.use('/api/v1', message)
 
 
 app.listen(process.env.PORT, ()=>{

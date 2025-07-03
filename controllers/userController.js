@@ -156,7 +156,7 @@ exports.loginUser = async (req, res, next) => {
       return res.status(400).json({ success: false, message: "Incorrect password" });
     } else {
       // Generate JWT token
-      const token = jwt.sign({ id: existingUser._id, name: existingUser.name, email: existingUser.email, admin: existingUser.admin }, JWT_SECRET, { expiresIn: '1d' });
+      const token = jwt.sign({ id: existingUser._id, name: existingUser.name, email: existingUser.email, admin: existingUser.admin }, JWT_SECRET, { expiresIn: '7d' });
       return res.status(200).json({ success: true, message: "Login successful", user: existingUser, token: token });
     }
   } catch (err) {

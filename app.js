@@ -24,6 +24,7 @@ const message = require('./routes/message')
 
 
 connectDatabase()
+//app.use(express.urlencoded({ extended: true }));
 
 app.use(express.json())
 

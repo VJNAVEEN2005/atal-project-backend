@@ -298,7 +298,7 @@ exports.forgotPassword = async (req, res) => {
 
     const resetToken = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "15m" });
 
-    const resetLink = `http://aic-project.netlify.app//reset-password/${resetToken}`;
+    const resetLink = `http://aic-project.netlify.app/reset-password/${resetToken}`;
 
     const htmlContent = `
       <h1>AIC - PECF</h1>

@@ -2,6 +2,7 @@ const multer = require('multer');
 const userModel = require('../models/userModel');
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const sendEmail = require("../utils/sendEmail");
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -281,3 +282,79 @@ exports.updateAdminStatus = async (req, res, next) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
+
+// Controller function to handle forgot password
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Email is required" });
+    }
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const resetToken = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "15m" });
+
+    const resetLink = `http://aic-project.netlify.app//reset-password/${resetToken}`;
+
+    const htmlContent = `
+      <h1>AIC - PECF</h1>
+      <h2>Password Reset Request</h2>
+      <p>Click the link below to reset your password. This link expires in 15 minutes:</p>
+      <a href="${resetLink}">Reset Password</a>
+      <p>If you did not request this, you can ignore this email.</p>
+    `;
+
+    const emailSent = await sendEmail(email, "Reset Your Password", htmlContent);
+
+    if (!emailSent) {
+      return res.status(500).json({ success: false, message: "Failed to send email" });
+    }
+
+    return res.status(200).json({ success: true, message: "Reset link sent to email" });
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+// Controller function to reset password using the reset token
+exports.resetPassword = async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    console.log("Decoded token:", decoded);
+    const userId = decoded.id;
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "Invalid token or user" });
+    }
+
+    user.password = newPassword; // make sure to hash it before saving
+    await user.save();
+
+    res.status(200).json({ success: true, message: "Password reset successful" });
+  } catch (err) {
+    console.error("Reset token error:", err);
+    res.status(400).json({ success: false, message: "Invalid or expired token" });
+  }
+};
+
+// verify reset token
+exports.verifyResetToken = async (req, res) => {
+  const { token } = req.body;
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    console.log("Decoded token:", decoded);
+    return res.status(200).json({ success: true, message: "Token is valid", userId: decoded.id });
+  } catch (err) {
+    console.error("Token verification error:", err);
+    return res.status(400).json({ success: false, message: "Invalid or expired token" });
+  }
+}

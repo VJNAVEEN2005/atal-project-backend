@@ -1,5 +1,5 @@
 const express = require('express');
-const { registerUser, loginUser, authenticateToken,getUser, updateUser, getProfileImage, deleteProfileImage, uploadProfileImage, uploadMiddleware, getAllUsers, updateAdminStatus } = require('../controllers/userController');
+const { registerUser, loginUser, authenticateToken,getUser, updateUser, getProfileImage, deleteProfileImage, uploadProfileImage, uploadMiddleware, getAllUsers, updateAdminStatus, forgotPassword, resetPassword, verifyResetToken } = require('../controllers/userController');
 const router = express.Router();
 
 router.route('/register').post(registerUser);
@@ -13,5 +13,8 @@ router.route('/profileImage/:userId').get(getProfileImage); // Add this line to 
 
 router.route('/getAllUsers').get(getAllUsers);
 router.route('/updateAdminStatus').post(updateAdminStatus);
+router.route('/forgotPassword').post(forgotPassword);
+router.route('/resetPassword').post(resetPassword);
+router.route('/verifyResetToken').post(verifyResetToken);
 
 module.exports = router;

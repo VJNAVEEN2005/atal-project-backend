@@ -98,7 +98,10 @@ const createPartner = async (req, res) => {
       website,
       email,
       linkedin,
-      details
+      details,
+       role,
+      expertise,
+      companyName
     };
     
     // Handle image upload
@@ -171,7 +174,7 @@ const createPartner = async (req, res) => {
 // Update partner
 const updatePartner = async (req, res) => {
   try {
-    const { name, type, website, email, linkedin, details } = req.body;
+    const { name, type, website, email, linkedin, details, role,expertise,companyName } = req.body;
     
     const partner = await Partner.findById(req.params.id);
     if (!partner) {
@@ -188,6 +191,10 @@ const updatePartner = async (req, res) => {
     partner.email = email || partner.email;
     partner.linkedin = linkedin || partner.linkedin;
     partner.details = details || partner.details;
+    partner.role = role || partner.role;
+    partner.expertise = expertise || partner.expertise;
+    partner.companyName = companyName || partner.companyName;
+
     
     // Handle image update
     if (req.file) {

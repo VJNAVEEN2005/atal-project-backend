@@ -1,4 +1,11 @@
 const tenderModel = require('../models/tenderModel');
+const { 
+  uploadFileStream, 
+  getFileStream, 
+  deleteFile,
+  getFileInfo,
+  bufferToStream
+} = require('../models/gridfs');
 
 exports.createTender = async (req, res) => {
     try {
@@ -6,7 +13,26 @@ exports.createTender = async (req, res) => {
             return res.status(400).json({ success: false, message: "No file uploaded" });
         }
 
-        // Create a new tender with file data
+        // Create upload stream
+        const uploadStream = uploadFileStream(req.file.originalname, {
+            contentType: req.file.mimetype,
+            metadata: {
+                uploadedBy: req.user?.id || 'system',
+                originalName: req.file.originalname
+            }
+        });
+
+        // Pipe the file buffer to GridFS
+        const bufferStream = bufferToStream(req.file.buffer);
+        bufferStream.pipe(uploadStream);
+
+        // Wait for upload to complete
+        const fileId = await new Promise((resolve, reject) => {
+            uploadStream.on('finish', () => resolve(uploadStream.id));
+            uploadStream.on('error', reject);
+        });
+
+        // Create tender document
         const newTender = new tenderModel({
             title: req.body.title,
             date: req.body.date,
@@ -15,13 +41,13 @@ exports.createTender = async (req, res) => {
             lastDate: req.body.lastDate,
             lastTime: req.body.lastTime,
             fileName: req.file.originalname,
-            fileData: req.file.buffer,
-            fileContentType: req.file.mimetype
+            fileId: fileId,
+            fileContentType: req.file.mimetype,
+            fileSize: req.file.size
         });
 
         await newTender.save();
         
-        // Return success response without sending back the large file data
         const responseTender = {
             _id: newTender._id,
             title: newTender.title,
@@ -31,6 +57,7 @@ exports.createTender = async (req, res) => {
             lastDate: newTender.lastDate,
             lastTime: newTender.lastTime,
             fileName: newTender.fileName,
+            fileSize: newTender.fileSize,
             createdAt: newTender.createdAt
         };
 
@@ -48,9 +75,30 @@ exports.createTender = async (req, res) => {
 
 exports.getTenders = async (req, res) => {
     try {
-        // Get all tenders without returning the file data
-        const tenders = await tenderModel.find({}).select('-fileData').sort({ createdAt: -1 });
-        return res.status(200).json({ success: true, message: "Tenders fetched successfully", tenders });
+        const tenders = await tenderModel.find({})
+            .sort({ createdAt: -1 })
+            .lean(); // Convert to plain JS objects
+            
+        // Add file info if needed
+        const tendersWithFileInfo = await Promise.all(
+            tenders.map(async tender => {
+                if (tender.fileId) {
+                    const fileInfo = await getFileInfo(tender.fileId);
+                    return {
+                        ...tender,
+                        fileSize: fileInfo?.length || tender.fileSize,
+                        uploadDate: fileInfo?.uploadDate
+                    };
+                }
+                return tender;
+            })
+        );
+        
+        return res.status(200).json({ 
+            success: true, 
+            message: "Tenders fetched successfully", 
+            tenders: tendersWithFileInfo 
+        });
     } catch (error) {
         console.error("Error fetching tenders:", error);
         return res.status(500).json({ success: false, message: error.message });
@@ -60,39 +108,65 @@ exports.getTenders = async (req, res) => {
 exports.downloadTender = async (req, res) => {
     try {
         const tenderId = req.params.id;
-        
-        // Find the tender document
         const tender = await tenderModel.findById(tenderId);
         
         if (!tender) {
             return res.status(404).json({ success: false, message: "Tender not found" });
         }
+
+        if (!tender.fileId) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "File not available for this tender" 
+            });
+        }
+
+        // Get file info for proper headers
+        const fileInfo = await getFileInfo(tender.fileId);
         
-        // Set response headers
         res.set({
-            'Content-Type': tender.fileContentType,
+            'Content-Type': tender.fileContentType || 'application/pdf',
             'Content-Disposition': `attachment; filename="${tender.fileName}"`,
-            'Content-Length': tender.fileData.length
+            'Content-Length': fileInfo?.length || tender.fileSize
+        });
+
+        const readStream = getFileStream(tender.fileId);
+        
+        // Proper error handling for the stream
+        readStream.on('error', (err) => {
+            console.error('Stream error:', err);
+            if (!res.headersSent) {
+                res.status(500).json({ 
+                    success: false, 
+                    message: 'Error streaming file' 
+                });
+            }
         });
         
-        // Send the file
-        return res.send(tender.fileData);
+        readStream.pipe(res);
         
     } catch (error) {
         console.error("Error downloading tender:", error);
-        return res.status(500).json({ success: false, message: error.message });
+        if (!res.headersSent) {
+            return res.status(500).json({ success: false, message: error.message });
+        }
     }
 };
 
 exports.deleteTender = async (req, res) => {
     try {
         const tenderId = req.params.id;
+        const tender = await tenderModel.findById(tenderId);
         
-        const deletedTender = await tenderModel.findByIdAndDelete(tenderId);
-        
-        if (!deletedTender) {
+        if (!tender) {
             return res.status(404).json({ success: false, message: "Tender not found" });
         }
+
+        if (tender.fileId) {
+            await deleteFile(tender.fileId);
+        }
+
+        await tenderModel.findByIdAndDelete(tenderId);
         
         return res.status(200).json({ success: true, message: "Tender deleted successfully" });
         

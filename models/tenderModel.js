@@ -20,10 +20,7 @@ const tenderSchema = new mongoose.Schema({
         required: true
     },
     fileName: String,
-    fileData: {
-        type: Buffer,
-        required: true
-    },
+    fileId: mongoose.Schema.Types.ObjectId, // Store GridFS file reference
     fileContentType: {
         type: String,
         default: 'application/pdf'

@@ -12,6 +12,18 @@ const partnerSchema = new mongoose.Schema({
     enum: ['Academic', 'Corporate', 'IP Partners', 'Mentors', 'External Investors'],
     default: 'Academic'
   },
+  role: {
+    type: String,
+    trim: true
+  },
+  expertise: [{
+    type: String,
+    trim: true
+  }],
+   companyName: {
+    type: String,
+    trim: true
+  },
   website: {
     type: String,
     validate: {
@@ -65,7 +77,8 @@ const partnerSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
-  }
+  },
+  
 }, {
   timestamps: true
 });

@@ -5,7 +5,7 @@ const {
   deleteFile,
   getFileInfo,
   bufferToStream
-} = require('../models/gridfs');
+} = require('../utils/gridfs');
 
 exports.createTender = async (req, res) => {
     try {

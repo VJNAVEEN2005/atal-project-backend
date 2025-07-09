@@ -3,6 +3,7 @@ const userModel = require('../models/userModel');
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const sendEmail = require("../utils/sendEmail");
+const { resetPasswordMailDesign } = require('../utils/mailStyle');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -300,13 +301,7 @@ exports.forgotPassword = async (req, res) => {
 
     const resetLink = `http://aic-project.netlify.app/reset-password/${resetToken}`;
 
-    const htmlContent = `
-      <h1>AIC - PECF</h1>
-      <h2>Password Reset Request</h2>
-      <p>Click the link below to reset your password. This link expires in 15 minutes:</p>
-      <a href="${resetLink}">Reset Password</a>
-      <p>If you did not request this, you can ignore this email.</p>
-    `;
+    const htmlContent = resetPasswordMailDesign(resetLink);
 
     const emailSent = await sendEmail(email, "Reset Your Password", htmlContent);
 

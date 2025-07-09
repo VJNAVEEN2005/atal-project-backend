@@ -11,7 +11,7 @@ const sendEmail = async (to, subject, html) => {
     });
 
     const mailOptions = {
-      from: `"Your App Name" <${process.env.EMAIL_USER}>`,
+      from: `"AIC PECF" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       html,

@@ -302,6 +302,8 @@ exports.forgotPassword = async (req, res) => {
     const resetLink = `http://aic-project.netlify.app/reset-password/${resetToken}`;
 
     const htmlContent = resetPasswordMailDesign(resetLink);
+    console.log("Reset link:", resetLink);
+    console.log("HTML Content:", htmlContent);
 
     const emailSent = await sendEmail(email, "Reset Your Password", htmlContent);
 

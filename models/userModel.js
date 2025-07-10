@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
+  userId: { type: String, unique: true},
   domain: String,
   name: String,
   admin: Number,
@@ -24,6 +25,19 @@ const userSchema = new mongoose.Schema({
   businessType: String,
   websiteUrl: String,
   growthPotential: String,
+  // Student-specific fields
+  dateOfBirth: String,
+  fatherName: String,
+  motherName: String,
+  guardianName: String,
+  bloodGroup: String,
+  educationLevel: String,
+  collegeName: String,
+  registrationNumber: String,
+  department: String,
+  yearOfGraduation: String,
+  standard: String,
+  schoolName: String,
   // Add this new field for profile photo
   profilePhoto: {
     data: Buffer,

@@ -6,7 +6,18 @@ const path = require('path')
 const connectDatabase = require('./config/connectDatabase')
 const cors = require("cors");
 const { json } = require('stream/consumers');
+const bodyParser = require('body-parser');
+
 app.use(cors());
+app.use(bodyParser.json({ limit: '100mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '100mb' }));
+
+app.use((req, res, next) => {
+  const contentLength = req.headers['content-length'];
+  console.log(`📦 Payload size: ${contentLength ? contentLength + ' bytes' : 'unknown'}`);
+  next();
+});
+
 
 dotenv.config({path: path.join(__dirname, 'config', 'config.env')})
 

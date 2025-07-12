@@ -355,3 +355,19 @@ exports.verifyResetToken = async (req, res) => {
     return res.status(400).json({ success: false, message: "Invalid or expired token" });
   }
 }
+
+
+// valid userId which is not the objectId
+exports.validUserId = async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const user = await userModel.findOne({ userId: userId });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    return res.status(200).json({ success: true, message: "Valid user ID" });
+  } catch (err) {
+    console.error("Error validating user ID:", err);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};

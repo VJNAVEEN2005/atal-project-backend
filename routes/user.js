@@ -1,9 +1,9 @@
 const express = require('express');
-const { registerUser, loginUser, authenticateToken,getUser, updateUser, getProfileImage, deleteProfileImage, uploadProfileImage, uploadMiddleware, getAllUsers, updateAdminStatus, forgotPassword, resetPassword, verifyResetToken } = require('../controllers/userController');
+const { registerUser, loginUser, authenticateToken, getUser, updateUser, getProfileImage, deleteProfileImage, uploadProfileImage, uploadMiddleware, getAllUsers, updateAdminStatus, forgotPassword, resetPassword, verifyResetToken, validUserId } = require('../controllers/userController');
 const router = express.Router();
 
 router.route('/register').post(registerUser);
-router.route('/login').post(loginUser); 
+router.route('/login').post(loginUser);
 router.route('/authenticate').post(authenticateToken); // Add this line to define the route for token authentication
 router.route('/getUser').post(getUser);
 router.route('/updateUser').post(updateUser);
@@ -16,5 +16,7 @@ router.route('/updateAdminStatus').post(updateAdminStatus);
 router.route('/forgotPassword').post(forgotPassword);
 router.route('/resetPassword').post(resetPassword);
 router.route('/verifyResetToken').post(verifyResetToken);
+
+router.route('/validUserId/:userId').get(validUserId); // Add this line to define the route for validating user ID
 
 module.exports = router;

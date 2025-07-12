@@ -33,7 +33,7 @@ const partnerRoute = require('./routes/partner')
 const carouselImage = require('./routes/carouselImage')
 const message = require('./routes/message')
 const ecosystemRoute = require('./routes/ecosystem')
-
+const internshipRoute = require('./routes/internship')
 
 connectDatabase()
 //app.use(express.urlencoded({ extended: true }));
@@ -55,6 +55,7 @@ app.use('/api/v1/partners', partnerRoute)
 app.use('/api/v1', carouselImage)
 app.use('/api/v1', message)
 app.use('/api/v1', ecosystemRoute)
+app.use('/api/v1', internshipRoute)
 
 
 app.listen(process.env.PORT, ()=>{

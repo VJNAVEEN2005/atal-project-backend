@@ -38,6 +38,9 @@ const userSchema = new mongoose.Schema({
   yearOfGraduation: String,
   standard: String,
   schoolName: String,
+  // Teams-specific fields
+  role: String,
+  linkedin: String,
   // Add this new field for profile photo
   profilePhoto: {
     data: Buffer,

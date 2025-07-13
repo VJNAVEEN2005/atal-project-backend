@@ -89,7 +89,7 @@ exports.getTeamMembers = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Team members fetched successfully",
-      team: responseTeamMembers
+      teams: responseTeamMembers
     });
   } catch (error) {
     console.error('Error fetching team members:', error);

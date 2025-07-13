@@ -371,3 +371,32 @@ exports.validUserId = async (req, res) => {
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
+
+// Get all team members
+exports.getAllTeamMembers = async (req, res) => {
+  try {
+    const teamMembers = await userModel.find({ domain: 'Team Member' }).select('-password -confirmPassword -profilePhoto');
+    if (teamMembers.length === 0) {
+      return res.status(404).json({ success: false, message: "No team members found" });
+    }
+    return res.status(200).json({ success: true, message: "Team members retrieved successfully", teamMembers });
+  } catch (err) {
+    console.error("Error getting team members:", err);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+// Delete user by ID
+exports.deleteUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await userModel.findByIdAndDelete(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    return res.status(200).json({ success: true, message: "User deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting user:", err);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};

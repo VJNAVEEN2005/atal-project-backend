@@ -16,7 +16,7 @@ router.post('/stock', upload.single('stockImage'),adminAuthentication, createSto
 router.put('/stock/:id/image', adminAuthentication, updateStockImage);
 router.get('/stock', getAllStockDetails);
 router.get('/stock/:id', getStockDetailById);
-router.delete('/stock/:id', deleteStockDetail);
+router.delete('/stock/:id', adminAuthentication, deleteStockDetail);
 router.get('/stock/:id/image', getStockImage);
 
 module.exports = router;

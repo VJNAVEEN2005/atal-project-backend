@@ -1,5 +1,6 @@
 const StockDetail = require('../models/stockDetailModel');
 const mongoose = require('mongoose');  // Add this line at the top
+const UpdateStockRecords = require('../models/updateStockRecordsModel');
 // post a new stock detail with image upload
 
 exports.createStockDetail = async (req, res) => {
@@ -167,6 +168,19 @@ exports.getStockImage = async (req, res) => {
 // delete stock detail by ID
 exports.deleteStockDetail = async (req, res) => {
     try {
+        const stockDetailFind = await StockDetail.findById(req.params.id);
+        if (!stockDetailFind) {
+            return res.status(404).json({
+                status: 'fail',
+                message: 'Stock detail not found'
+            });
+        }
+        // Check if the stock has any associated update records if there delete that too
+        const updateRecords = await UpdateStockRecords.find({ stockId: stockDetailFind.stockId });
+        if (updateRecords.length > 0) {
+            await UpdateStockRecords.deleteMany({ stockId: stockDetailFind.stockId });
+        }
+
         const stockDetail = await StockDetail.findByIdAndDelete(req.params.id);
         if (!stockDetail) {
             return res.status(404).json({

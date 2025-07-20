@@ -90,8 +90,10 @@ const getPartner = async (req, res) => {
 // Create new partner
 const createPartner = async (req, res) => {
   try {
-    const { name, type, website, email, linkedin, details } = req.body;
+    const { name, type, website, email, linkedin, details, role, expertise, companyName } = req.body;
+    console.log('Input from form:', req.body);
     
+    console.log('File received:', req.file);
     const partnerData = {
       name,
       type,
@@ -99,7 +101,7 @@ const createPartner = async (req, res) => {
       email,
       linkedin,
       details,
-       role,
+      role,
       expertise,
       companyName
     };

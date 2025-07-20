@@ -5,7 +5,8 @@ const {
     updateInternship,
     getAllInternships,
     getInternshipById,
-    deleteInternship
+    deleteInternship,
+    getInternshipsByUserId
 } = require('../controllers/internshipController');
 const adminAuthentication = require('../middleware/adminAuthentication.js');
 
@@ -14,5 +15,6 @@ router.put('/internship/:internshipId', adminAuthentication,updateInternship);
 router.get('/internships/', getAllInternships);
 router.get('/internship/:internshipId', getInternshipById);
 router.delete('/internship/:internshipId',adminAuthentication, deleteInternship);
+router.get('/internships/user/:userId', getInternshipsByUserId);
 
 module.exports = router;

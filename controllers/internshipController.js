@@ -118,3 +118,28 @@ exports.deleteInternship = async (req, res) => {
         })
     }
 }
+
+// Get internships by user ID
+exports.getInternshipsByUserId = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const internships = await Internship.find({ userId: userId });
+
+        if (internships.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'No internships found for this user'
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: internships
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};

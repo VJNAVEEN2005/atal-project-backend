@@ -1,5 +1,5 @@
 const express = require('express');
-const { registerUser, loginUser, authenticateToken, getUser, updateUser, getProfileImage, deleteProfileImage, uploadProfileImage, uploadMiddleware, getAllUsers, updateAdminStatus, forgotPassword, resetPassword, verifyResetToken, validUserId, getAllTeamMembers, deleteUser } = require('../controllers/userController');
+const { registerUser, loginUser, authenticateToken, getUser, updateUser, getProfileImage, deleteProfileImage, uploadProfileImage, uploadMiddleware, getAllUsers, updateAdminStatus, forgotPassword, resetPassword, verifyResetToken, validUserId, getAllTeamMembers, deleteUser, getUsersByDomain } = require('../controllers/userController');
 const { getTeamMembers } = require('../controllers/teamController');
 const adminAuthentication = require('../middleware/adminAuthentication');
 const router = express.Router();
@@ -23,5 +23,7 @@ router.route('/validUserId/:userId').get(validUserId); // Add this line to defin
 
 router.route('/teamMembers').get(getAllTeamMembers); // Add this line to define the route for getting team members
 router.route('/deleteUser/:userId').delete(adminAuthentication, deleteUser); // Add this line to define the route for deleting a user by ID
+
+router.route('/users/domain/:domain').get(getUsersByDomain); // Add this line to define the route for getting users by domain
 
 module.exports = router;

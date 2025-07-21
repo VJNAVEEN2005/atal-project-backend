@@ -400,3 +400,19 @@ exports.deleteUser = async (req, res) => {
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
+
+
+// Get user by domain
+exports.getUsersByDomain = async (req, res) => {
+  try {
+    const { domain } = req.params;
+    const users = await userModel.find({ domain: domain }).select('-password -confirmPassword -profilePhoto');
+    if (users.length === 0) {
+      return res.status(404).json({ success: false, message: "No users found for this domain" });
+    }
+    return res.status(200).json({ success: true, message: "Users retrieved successfully", users });
+  } catch (err) {
+    console.error("Error getting users by domain:", err);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};

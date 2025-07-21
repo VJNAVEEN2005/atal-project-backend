@@ -24,6 +24,6 @@ router.route('/validUserId/:userId').get(validUserId); // Add this line to defin
 router.route('/teamMembers').get(getAllTeamMembers); // Add this line to define the route for getting team members
 router.route('/deleteUser/:userId').delete(adminAuthentication, deleteUser); // Add this line to define the route for deleting a user by ID
 
-router.route('/users/domain/:domain').get(getUsersByDomain); // Add this line to define the route for getting users by domain
+router.route('/users/domain/:domain').get(adminAuthentication,getUsersByDomain); // Add this line to define the route for getting users by domain
 
 module.exports = router;

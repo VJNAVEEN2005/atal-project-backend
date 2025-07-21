@@ -15,4 +15,7 @@ router.get('/projects/', getAllProjects);
 router.get('/project/:projectId', getProjectById);
 router.delete('/project/:projectId', adminAuthentication, deleteProject);
 
+// get projects by user ID
+router.get('/user/:userId/projects', getProjectsByUserId);
+
 module.exports = router;

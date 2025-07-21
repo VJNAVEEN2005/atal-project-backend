@@ -120,3 +120,27 @@ exports.deleteProject = async (req, res) => {
         });
     }
 };
+
+
+// get projects by user ID
+exports.getProjectsByUserId = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const projects = await Project.find({ userId });
+        if (projects.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'No projects found for this user'
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            data: projects
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};

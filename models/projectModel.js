@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const projectSchema = new mongoose.Schema({
     name: { type: String, required: true },
     registerNumber: { type: String, required: true },
-    userId: { type: String, required: true },
+    userId: { type: String },
     department: String,
     yearOfStudy: String,
     instituteName: String,

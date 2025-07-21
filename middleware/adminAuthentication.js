@@ -4,7 +4,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 
 const adminAuthentication = (req, res, next) => {
     const token = req.headers['token'];
-
+    console.log('Token received:', token);
     if (!token) {
         return res.status(401).json({ 
             success: false, 

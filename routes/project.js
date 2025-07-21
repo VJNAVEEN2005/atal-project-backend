@@ -5,7 +5,8 @@ const {
     updateProject,
     getAllProjects,
     getProjectById,
-    deleteProject
+    deleteProject,
+    getProjectsByUserId
 } = require('../controllers/projectController');
 const adminAuthentication = require('../middleware/adminAuthentication.js');
 

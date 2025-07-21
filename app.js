@@ -34,6 +34,7 @@ const carouselImage = require('./routes/carouselImage')
 const message = require('./routes/message')
 const ecosystemRoute = require('./routes/ecosystem')
 const internshipRoute = require('./routes/internship')
+const projectRoute = require('./routes/project')
 const stockDetailRoute = require('./routes/stockDetail');
 const updateStockRecordsRoute = require('./routes/updateStockRecords');
 
@@ -58,6 +59,7 @@ app.use('/api/v1', carouselImage)
 app.use('/api/v1', message)
 app.use('/api/v1', ecosystemRoute)
 app.use('/api/v1', internshipRoute)
+app.use('/api/v1', projectRoute)
 app.use('/api/v1', stockDetailRoute)
 app.use('/api/v1', updateStockRecordsRoute);
 

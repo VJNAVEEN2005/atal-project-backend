@@ -8,4 +8,8 @@ router.get('/event/:id', eventController.getEvent);
 router.put('/event/:id', eventController.updateEvent);
 router.delete('/event/:id', eventController.deleteEvent);
 
+// Route to get upcoming events
+router.get('/events/upcoming', eventController.getUpcomingEvents);
+
+
 module.exports = router;

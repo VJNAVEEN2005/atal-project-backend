@@ -211,3 +211,30 @@ exports.deleteEvent = async (req, res) => {
     });
   }
 };
+
+//Add event api for getting upcomming events(filtering)
+exports.getUpcomingEvents = async (req, res) => {
+  try {
+    const events = await Event.find({ date: { $gte: new Date() } }).sort({ date: 1 }).select('-poster');
+    
+    // Convert all buffer data to base64
+    const eventsWithBase64 = events.map(event => {
+      const eventObj = event.toObject();
+      if (eventObj.poster && eventObj.poster.data) {
+        eventObj.poster.data = eventObj.poster.data.toString('base64');
+      }
+      return eventObj;
+    });
+    
+    return res.status(200).json({ 
+      success: true, 
+      message: "Upcoming events fetched successfully", 
+      events: eventsWithBase64
+    });
+  } catch (error) {
+    return res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
+  }
+};

@@ -4,7 +4,7 @@ const Internship = require('../models/internshipModal');
 exports.createInternship = async (req, res) => {
     try {
         const internshipData = req.body;
-
+        console.log('Creating internship with data:', internshipData);
         // Create the internship entry
         const newInternship = await Internship.create(internshipData);
 
@@ -129,6 +129,31 @@ exports.getInternshipsByUserId = async (req, res) => {
             return res.status(404).json({
                 success: false,
                 message: 'No internships found for this user'
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: internships
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+// Get internships by emailId
+exports.getInternshipsByEmailId = async (req, res) => {
+    try {
+        const { emailId } = req.params;
+        const internships = await Internship.find({ emailId: emailId });
+
+        if (internships.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'No internships found for this emailId'
             });
         }
 

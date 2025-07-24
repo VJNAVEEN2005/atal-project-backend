@@ -6,7 +6,9 @@ const {
     getAllProjects,
     getProjectById,
     deleteProject,
-    getProjectsByUserId
+    getProjectsByUserId,
+    getProjectsByEmailId,
+    updateProjectImage
 } = require('../controllers/projectController');
 const adminAuthentication = require('../middleware/adminAuthentication.js');
 
@@ -18,5 +20,8 @@ router.delete('/project/:projectId', adminAuthentication, deleteProject);
 
 // get projects by user ID
 router.get('/user/:userId/projects', getProjectsByUserId);
+
+// get projects by email ID
+router.get('/email/:emailId/projects', getProjectsByEmailId);
 
 module.exports = router;

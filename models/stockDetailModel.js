@@ -11,11 +11,11 @@ const stockDetailSchema = new Schema({
         type: String,
         required: true
     },
-    stockImage: {
-        data: Buffer,
-        contentType: String,
-        fileName: String
-    },
+    // stockImage: {
+    //     data: Buffer,
+    //     contentType: String,
+    //     fileName: String
+    // },
     count: {
         type: Number,
         default: 0,
@@ -24,7 +24,7 @@ const stockDetailSchema = new Schema({
     stockType: {
         type: String,
         required: true,
-        enum: ['Electronic', 'Stationry Items', 'Food Inventory']
+        enum: ['Electronic', 'Consumables']
     },
 })
 

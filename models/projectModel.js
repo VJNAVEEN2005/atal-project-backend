@@ -5,6 +5,7 @@ const projectSchema = new mongoose.Schema({
     registerNumber: { type: String, required: true },
     userId: { type: String },
     department: String,
+    emailId: String,
     yearOfStudy: String,
     instituteName: String,
     projectType: String,
@@ -22,6 +23,11 @@ const projectSchema = new mongoose.Schema({
         }
     ],
     components: [String],
+    image:{
+        data: Buffer,
+        contentType: String,
+        fileName: String
+    },
     status: {
         type: String,
         enum: ['active', 'completed'],

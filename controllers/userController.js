@@ -247,6 +247,47 @@ exports.getAllUsers = async (req, res, next) => {
   }
 };
 
+// Controller function to get users with pagination
+exports.getUsersPaginated = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Get total count of users
+    const totalUsers = await userModel.countDocuments();
+    
+    // Get users for current page
+    const users = await userModel.find()
+      .select('-password -confirmPassword -profilePhoto')
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 }); // Sort by newest first
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(totalUsers / limit);
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
+
+    return res.status(200).json({
+      success: true,
+      message: "Users retrieved successfully",
+      users: users,
+      pagination: {
+        currentPage: page,
+        totalPages: totalPages,
+        totalUsers: totalUsers,
+        usersPerPage: limit,
+        hasNextPage: hasNextPage,
+        hasPreviousPage: hasPreviousPage
+      }
+    });
+  } catch (err) {
+    console.error("Error getting users with pagination:", err);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
 // Controller function to update admin status
 exports.updateAdminStatus = async (req, res, next) => {
   try {
@@ -414,5 +455,236 @@ exports.getUsersByDomain = async (req, res) => {
   } catch (err) {
     console.error("Error getting users by domain:", err);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+// Get users by domain with pagination
+exports.getUsersByDomainPaginated = async (req, res) => {
+  try {
+    const { domain } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Get total count of users in domain
+    const totalUsers = await userModel.countDocuments({ domain: domain });
+    
+    if (totalUsers === 0) {
+      return res.status(404).json({ success: false, message: "No users found for this domain" });
+    }
+
+    // Get users for current page
+    const users = await userModel.find({ domain: domain })
+      .select('-password -confirmPassword -profilePhoto')
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 }); // Sort by newest first
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(totalUsers / limit);
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
+
+    return res.status(200).json({
+      success: true,
+      message: "Users retrieved successfully",
+      users: users,
+      pagination: {
+        currentPage: page,
+        totalPages: totalPages,
+        totalUsers: totalUsers,
+        usersPerPage: limit,
+        hasNextPage: hasNextPage,
+        hasPreviousPage: hasPreviousPage,
+        domain: domain
+      }
+    });
+  } catch (err) {
+    console.error("Error getting users by domain with pagination:", err);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+// Search users with pagination
+exports.searchUsers = async (req, res) => {
+  try {
+    const { search } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    if (!search || search.trim() === '') {
+      return res.status(400).json({ success: false, message: "Search query is required" });
+    }
+
+    // Create search criteria using regex for case-insensitive search
+    const searchRegex = new RegExp(search.trim(), 'i');
+    const searchCriteria = {
+      $or: [
+        { name: { $regex: searchRegex } },
+        { email: { $regex: searchRegex } },
+        { domain: { $regex: searchRegex } },
+        { userId: { $regex: searchRegex } },
+        { phone: { $regex: searchRegex } },
+        { organization: { $regex: searchRegex } },
+        { designation: { $regex: searchRegex } }
+      ]
+    };
+
+    // Get total count of matching users
+    const totalUsers = await userModel.countDocuments(searchCriteria);
+    
+    if (totalUsers === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "No users found matching the search criteria",
+        searchQuery: search
+      });
+    }
+
+    // Get users for current page
+    const users = await userModel.find(searchCriteria)
+      .select('-password -confirmPassword -profilePhoto')
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 }); // Sort by newest first
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(totalUsers / limit);
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
+
+    return res.status(200).json({
+      success: true,
+      message: "Users found successfully",
+      users: users,
+      searchQuery: search,
+      pagination: {
+        currentPage: page,
+        totalPages: totalPages,
+        totalUsers: totalUsers,
+        usersPerPage: limit,
+        hasNextPage: hasNextPage,
+        hasPreviousPage: hasPreviousPage
+      }
+    });
+  } catch (err) {
+    console.error("Error searching users:", err);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+// Advanced search users with filters and pagination
+exports.advancedSearchUsers = async (req, res) => {
+  try {
+    const { 
+      search, 
+      domain, 
+      admin, 
+      dateFrom, 
+      dateTo,
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = req.query;
+    
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Build search criteria
+    let searchCriteria = {};
+
+    // Text search across multiple fields
+    if (search && search.trim() !== '') {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      searchCriteria.$or = [
+        { name: { $regex: searchRegex } },
+        { email: { $regex: searchRegex } },
+        { userId: { $regex: searchRegex } },
+        { phone: { $regex: searchRegex } },
+        { organization: { $regex: searchRegex } },
+        { designation: { $regex: searchRegex } }
+      ];
+    }
+
+    // Domain filter
+    if (domain && domain.trim() !== '') {
+      searchCriteria.domain = new RegExp(domain.trim(), 'i');
+    }
+
+    // Admin level filter
+    if (admin !== undefined && admin !== '') {
+      searchCriteria.admin = parseInt(admin);
+    }
+
+    // Date range filter
+    if (dateFrom || dateTo) {
+      searchCriteria.createdAt = {};
+      if (dateFrom) {
+        searchCriteria.createdAt.$gte = new Date(dateFrom);
+      }
+      if (dateTo) {
+        searchCriteria.createdAt.$lte = new Date(dateTo);
+      }
+    }
+
+    // Get total count of matching users
+    const totalUsers = await userModel.countDocuments(searchCriteria);
+    
+    if (totalUsers === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "No users found matching the search criteria",
+        searchCriteria: {
+          search: search || '',
+          domain: domain || '',
+          admin: admin || '',
+          dateFrom: dateFrom || '',
+          dateTo: dateTo || ''
+        }
+      });
+    }
+
+    // Build sort criteria
+    const sortCriteria = {};
+    sortCriteria[sortBy] = sortOrder === 'asc' ? 1 : -1;
+
+    // Get users for current page
+    const users = await userModel.find(searchCriteria)
+      .select('-password -confirmPassword -profilePhoto')
+      .skip(skip)
+      .limit(limit)
+      .sort(sortCriteria);
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(totalUsers / limit);
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
+
+    return res.status(200).json({
+      success: true,
+      message: "Users found successfully",
+      users: users,
+      searchCriteria: {
+        search: search || '',
+        domain: domain || '',
+        admin: admin || '',
+        dateFrom: dateFrom || '',
+        dateTo: dateTo || '',
+        sortBy: sortBy,
+        sortOrder: sortOrder
+      },
+      pagination: {
+        currentPage: page,
+        totalPages: totalPages,
+        totalUsers: totalUsers,
+        usersPerPage: limit,
+        hasNextPage: hasNextPage,
+        hasPreviousPage: hasPreviousPage
+      }
+    });
+  } catch (err) {
+    console.error("Error in advanced search users:", err);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };

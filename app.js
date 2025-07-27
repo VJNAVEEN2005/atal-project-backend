@@ -37,6 +37,7 @@ const internshipRoute = require('./routes/internship')
 const projectRoute = require('./routes/project')
 const stockDetailRoute = require('./routes/stockDetail');
 const updateStockRecordsRoute = require('./routes/updateStockRecords');
+const eventRecordRoute = require('./routes/eventRecord');
 const contactRoute = require('./routes/contact');
 
 connectDatabase()
@@ -63,6 +64,7 @@ app.use('/api/v1', internshipRoute)
 app.use('/api/v1', projectRoute)
 app.use('/api/v1', stockDetailRoute)
 app.use('/api/v1', updateStockRecordsRoute);
+app.use('/api/v1/events', eventRecordRoute);
 app.use('/api/v1', contactRoute);
 
 

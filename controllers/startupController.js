@@ -561,6 +561,7 @@ exports.getStartupsWithImageStatus = async (req, res) => {
 
 // Create a new startup
 exports.createStartup = (req, res) => {
+  console.log('Received request to create startup:', req.body);
   upload(req, res, async (err) => {
     if (err) {
       return res.status(400).json({
@@ -570,6 +571,19 @@ exports.createStartup = (req, res) => {
     }
     
     try {
+      // Robust achievements parsing
+      let achievements = [];
+      if (Array.isArray(req.body.achievements)) {
+        achievements = req.body.achievements;
+      } else if (typeof req.body.achievements === 'string') {
+        try {
+          achievements = JSON.parse(req.body.achievements);
+          if (!Array.isArray(achievements)) achievements = [achievements];
+        } catch (e) {
+          achievements = [req.body.achievements];
+        }
+      }
+
       const startupData = {
         title: req.body.title,
         description: req.body.description,
@@ -578,9 +592,10 @@ exports.createStartup = (req, res) => {
         revenue: req.body.revenue,
         sector: req.body.sector,
         jobs: req.body.jobs,
-        achievements: JSON.parse(req.body.achievements || '[]')
+        achievements
       };
       
+      // Only add image if a file is present
       if (req.file) {
         startupData.image = {
           data: req.file.buffer,
@@ -592,7 +607,9 @@ exports.createStartup = (req, res) => {
       
       // Don't send the image data back in the response
       const response = newStartup.toObject();
-      delete response.image.data;
+      if (response.image && response.image.data) {
+        delete response.image.data;
+      }
       
       res.status(201).json({
         status: 'success',

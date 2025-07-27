@@ -5,7 +5,7 @@ const internshipSchema = new mongoose.Schema({
         required: true
     },
     dateOfBirth: String,
-    userId: String,
+    //userId: String,
     emailId: String,
     phoneNumber: String,
     fatherName: String,

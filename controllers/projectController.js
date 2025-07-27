@@ -144,3 +144,28 @@ exports.getProjectsByUserId = async (req, res) => {
         });
     }
 };
+
+// get projects by emailId
+exports.getProjectsByEmailId = async (req, res) => {
+    try {
+        const { emailId } = req.params;
+        const projects = await Project.find({ emailId });
+        if (projects.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'No projects found for this email ID'
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            data: projects
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+

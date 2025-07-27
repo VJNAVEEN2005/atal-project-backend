@@ -1,5 +1,5 @@
 const express = require('express');
-const { registerUser, loginUser, authenticateToken, getUser, updateUser, getProfileImage, deleteProfileImage, uploadProfileImage, uploadMiddleware, getAllUsers, updateAdminStatus, forgotPassword, resetPassword, verifyResetToken, validUserId, getAllTeamMembers, deleteUser, getUsersByDomain } = require('../controllers/userController');
+const { registerUser, loginUser, authenticateToken, getUser, updateUser, getProfileImage, deleteProfileImage, uploadProfileImage, uploadMiddleware, getAllUsers, updateAdminStatus, forgotPassword, resetPassword, verifyResetToken, validUserId, getAllTeamMembers, deleteUser, getUsersByDomain, getUsersPaginated, getUsersByDomainPaginated, searchUsers, advancedSearchUsers } = require('../controllers/userController');
 const { getTeamMembers } = require('../controllers/teamController');
 const adminAuthentication = require('../middleware/adminAuthentication');
 const router = express.Router();
@@ -14,6 +14,9 @@ router.route('/deleteProfileImage').post(deleteProfileImage); // Add this line t
 router.route('/profileImage/:userId').get(getProfileImage); // Add this line to define the route for getting the profile image 
 
 router.route('/getAllUsers').get(getAllUsers);
+router.route('/getAllUsersPaginated').get(getUsersPaginated); // New paginated route
+router.route('/searchUsers').get(searchUsers); // New search route
+router.route('/advancedSearchUsers').get(advancedSearchUsers); // New advanced search route
 router.route('/updateAdminStatus').post(updateAdminStatus);
 router.route('/forgotPassword').post(forgotPassword);
 router.route('/resetPassword').post(resetPassword);
@@ -25,5 +28,6 @@ router.route('/teamMembers').get(getAllTeamMembers); // Add this line to define 
 router.route('/deleteUser/:userId').delete(adminAuthentication, deleteUser); // Add this line to define the route for deleting a user by ID
 
 router.route('/users/domain/:domain').get(adminAuthentication,getUsersByDomain); // Add this line to define the route for getting users by domain
+router.route('/users/domain/:domain/paginated').get(adminAuthentication, getUsersByDomainPaginated); // New paginated route for domain users
 
 module.exports = router;

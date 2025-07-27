@@ -63,7 +63,7 @@ app.use('/api/v1', internshipRoute)
 app.use('/api/v1', projectRoute)
 app.use('/api/v1', stockDetailRoute)
 app.use('/api/v1', updateStockRecordsRoute);
-app.use('/api/v1/event', eventRecordRoute);
+app.use('/api/v1/events', eventRecordRoute);
 
 
 app.listen(process.env.PORT, ()=>{

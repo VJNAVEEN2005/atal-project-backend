@@ -37,6 +37,31 @@ const eventSchema = new mongoose.Schema({
   }
 });
 
+// Add text index for search
+eventSchema.index(
+  { 
+    title: "text", 
+    location: "text", 
+    description: "text" 
+  },
+  { 
+    weights: { 
+      title: 10, 
+      location: 5, 
+      description: 1 
+    },
+    name: "events_text_search" 
+  }
+);
+
+// Add virtual for formatted date
+eventSchema.virtual('dateString').get(function() {
+  return this.date.toISOString().split('T')[0];
+});
+
+// Enable virtuals in toObject output
+eventSchema.set('toObject', { virtuals: true });
+
 const Event = mongoose.model('Event', eventSchema);
 
 module.exports = Event;

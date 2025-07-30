@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const messageController = require('../controllers/messageController');
+const adminAuthentication = require('../middleware/adminAuthentication');
 
 // Configure multer for file uploads
 const upload = multer({
@@ -19,9 +20,9 @@ const upload = multer({
 });
 
 router.get('/message/', messageController.getMessages);
-router.post('/message/', upload.single('photo'), messageController.createMessage);
-router.put('/message/:id', upload.single('photo'), messageController.updateMessage);
-router.delete('/message/:id', messageController.deleteMessage);
-router.post('/message/reorder', messageController.reorderMessages);
+router.post('/message/',adminAuthentication, upload.single('photo'), messageController.createMessage);
+router.put('/message/:id',adminAuthentication ,upload.single('photo'), messageController.updateMessage);
+router.delete('/message/:id',adminAuthentication , messageController.deleteMessage);
+router.post('/message/reorder',adminAuthentication , messageController.reorderMessages);
 
 module.exports = router;

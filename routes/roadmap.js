@@ -9,6 +9,7 @@ const {
   getYears,
   getRoadmapStats
 } = require('../controllers/roadmapController');
+const adminAuthentication = require('../middleware/adminAuthentication');
 
 // Public routes
 router.get('/roadmap', getAllRoadmapItems);
@@ -17,8 +18,8 @@ router.get('/roadmap/stats', getRoadmapStats);
 router.get('/roadmap/:id', getRoadmapItemById);
 
 // Protected routes - only admin can modify roadmap
-router.post('/roadmap',  createRoadmapItem);
-router.put('/roadmap/:id',  updateRoadmapItem);
-router.delete('/roadmap/:id', deleteRoadmapItem);
+router.post('/roadmap', adminAuthentication, createRoadmapItem);
+router.put('/roadmap/:id',adminAuthentication,  updateRoadmapItem);
+router.delete('/roadmap/:id',adminAuthentication, deleteRoadmapItem);
 
 module.exports = router;

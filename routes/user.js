@@ -17,7 +17,7 @@ router.route('/getAllUsers').get(getAllUsers);
 router.route('/getAllUsersPaginated').get(getUsersPaginated); // New paginated route
 router.route('/searchUsers').get(searchUsers); // New search route
 router.route('/advancedSearchUsers').get(advancedSearchUsers); // New advanced search route
-router.route('/updateAdminStatus').post(updateAdminStatus);
+router.route('/updateAdminStatus').post(adminAuthentication,updateAdminStatus);
 router.route('/forgotPassword').post(forgotPassword);
 router.route('/resetPassword').post(resetPassword);
 router.route('/verifyResetToken').post(verifyResetToken);

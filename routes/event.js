@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const eventController = require('../controllers/eventController');
+const adminAuthentication = require('../middleware/adminAuthentication');
 
-router.post('/event/', eventController.createEvent);
+router.post('/event/', adminAuthentication,eventController.createEvent);
 router.get('/events/', eventController.getEvents);
 router.get('/event/:id', eventController.getEvent);
 router.put('/event/:id', eventController.updateEvent);

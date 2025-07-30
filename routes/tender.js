@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const router = express.Router();
 const { createTender, getTenders, downloadTender, deleteTender } = require('../controllers/tenderController');
+const adminAuthentication = require('../middleware/adminAuthentication');
 
 // Configure multer for memory storage
 const storage = multer.memoryStorage();
@@ -22,10 +23,10 @@ const upload = multer({
     fileFilter: fileFilter
 });
 
-router.post('/createTender', upload.single('tenderFile'), createTender);
+router.post('/createTender', adminAuthentication ,upload.single('tenderFile'), createTender);
 router.get('/getTenders', getTenders);
 router.get('/downloadTender/:id', downloadTender);
-router.delete('/deleteTender/:id', deleteTender);
+router.delete('/deleteTender/:id', adminAuthentication, deleteTender);
 
 // Error handling middleware
 router.use((err, req, res, next) => {

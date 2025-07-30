@@ -10,6 +10,7 @@ const {
   updatePartnerOrder,
   upload
 } = require('../controllers/partnerController');
+const adminAuthentication = require('../middleware/adminAuthentication');
 
 // Public routes
 router.get('/', getAllPartners);
@@ -26,9 +27,9 @@ router.get('/photo/:id', (req, res) => {
 // Protected routes (add your authentication middleware here)
 // router.use(authenticate); // Uncomment and add your auth middleware
 
-router.post('/', upload.single('image'), createPartner);
-router.put('/:id', upload.single('image'), updatePartner);
-router.delete('/:id', deletePartner);
-router.put('/order/update', updatePartnerOrder);
+router.post('/',adminAuthentication, upload.single('image'), createPartner);
+router.put('/:id',adminAuthentication, upload.single('image'), updatePartner);
+router.delete('/:id',adminAuthentication, deletePartner);
+router.put('/order/update',adminAuthentication, updatePartnerOrder);
 
 module.exports = router;

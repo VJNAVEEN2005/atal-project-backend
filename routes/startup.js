@@ -1,5 +1,6 @@
 const express = require('express');
 const startupController = require('../controllers/startupController');
+const adminAuthentication = require('../middleware/adminAuthentication');
 const {
   getAllStartups,
   getStartupsPaginated,
@@ -22,7 +23,7 @@ const router = express.Router();
 router
   .route('/startup/')
   .get(getAllStartups)
-  .post(createStartup);
+  .post(adminAuthentication, createStartup);
 
 router
   .route('/startup/paginated')
@@ -46,13 +47,13 @@ router
 
 router
   .route('/startup/import')
-  .post(importStartups);
+  .post(adminAuthentication, importStartups);
 
 router
   .route('/startup/:id')
   .get(getStartup)
-  .patch(updateStartup)
-  .delete(deleteStartup);
+  .patch(adminAuthentication, updateStartup)
+  .delete(adminAuthentication, deleteStartup);
 
 router
   .route('/startup/:id/image')

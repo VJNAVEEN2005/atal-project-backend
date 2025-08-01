@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const {
+    uploadProjectImage,
     createProject,
     updateProject,
     getAllProjects,
@@ -12,8 +13,8 @@ const {
 } = require('../controllers/projectController');
 const adminAuthentication = require('../middleware/adminAuthentication.js');
 
-router.post('/project/', adminAuthentication, createProject);
-router.put('/project/:projectId', adminAuthentication, updateProject);
+router.post('/project/', adminAuthentication, uploadProjectImage, createProject);
+router.put('/project/:projectId', adminAuthentication, uploadProjectImage, updateProject);
 router.get('/projects/', getAllProjects);
 router.get('/project/:projectId', getProjectById);
 router.delete('/project/:projectId', adminAuthentication, deleteProject);

@@ -1,4 +1,5 @@
 const EventRecord = require('../models/eventRecordModel');
+const XLSX = require('xlsx');
 // @desc    Update event data for all records by event name
 // @route   PUT /api/v1/events/update-by-eventname/:eventName
 // @access  Private/Admin
@@ -252,18 +253,67 @@ exports.updateEventRecord = async (req, res, next) => {
   }
 };
 
-// @desc    Get all event records
+// @desc    Get all event records with pagination
 // @route   GET /api/v1/events/registrations
 // @access  Private/Admin
 exports.getAllEventRecords = async (req, res, next) => {
   try {
-    const eventRecords = await EventRecord.find().sort({ createdAt: -1 });
+    // Extract pagination parameters from query
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    // Extract optional filter parameters
+    const { eventName, search, dateFrom, dateTo } = req.query;
+    
+    // Build filter object
+    let filter = {};
+    if (eventName) {
+      filter.eventName = { $regex: eventName, $options: 'i' };
+    }
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } },
+        { eventName: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    // Date range filter
+    if (dateFrom || dateTo) {
+      filter.dateOfRegistration = {};
+      if (dateFrom) {
+        filter.dateOfRegistration.$gte = new Date(dateFrom);
+      }
+      if (dateTo) {
+        filter.dateOfRegistration.$lte = new Date(dateTo);
+      }
+    }
+    
+    // Get total count for pagination info
+    const totalEventRecords = await EventRecord.countDocuments(filter);
+    const totalPages = Math.ceil(totalEventRecords / limit);
+    
+    // Get event records with pagination
+    const eventRecords = await EventRecord.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     res.status(200).json({
       status: 'success',
       results: eventRecords.length,
       data: {
         eventRecords
+      },
+      pagination: {
+        currentPage: page,
+        totalPages: totalPages,
+        totalEventRecords: totalEventRecords,
+        eventRecordsPerPage: limit,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
       }
     });
   } catch (error) {
@@ -313,12 +363,53 @@ exports.deleteEventRecord = async (req, res, next) => {
   }
 };
 
-// @desc    Get event summary grouped by event name
+// @desc    Get event summary grouped by event name with pagination
 // @route   GET /api/v1/events/summary
 // @access  Private/Admin
 exports.getEventSummary = async (req, res, next) => {
   try {
+    // Extract pagination parameters from query
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    // Extract optional filter parameters
+    const { search, dateFrom, dateTo } = req.query;
+    
+    // Build match stage for filtering
+    let matchStage = {};
+    if (search) {
+      matchStage.eventName = { $regex: search, $options: 'i' };
+    }
+    if (dateFrom || dateTo) {
+      matchStage.dateOfRegistration = {};
+      if (dateFrom) {
+        matchStage.dateOfRegistration.$gte = new Date(dateFrom);
+      }
+      if (dateTo) {
+        matchStage.dateOfRegistration.$lte = new Date(dateTo);
+      }
+    }
+
+    // First get the total count of unique events for pagination
+    const totalEventsCount = await EventRecord.aggregate([
+      ...(Object.keys(matchStage).length > 0 ? [{ $match: matchStage }] : []),
+      {
+        $group: {
+          _id: "$eventName"
+        }
+      },
+      {
+        $count: "totalEvents"
+      }
+    ]);
+
+    const totalEvents = totalEventsCount.length > 0 ? totalEventsCount[0].totalEvents : 0;
+    const totalPages = Math.ceil(totalEvents / limit);
+
+    // Get paginated event summary
     const eventSummary = await EventRecord.aggregate([
+      ...(Object.keys(matchStage).length > 0 ? [{ $match: matchStage }] : []),
       {
         $group: {
           _id: "$eventName",
@@ -349,6 +440,12 @@ exports.getEventSummary = async (req, res, next) => {
       },
       {
         $sort: { eventDate: -1 }
+      },
+      {
+        $skip: skip
+      },
+      {
+        $limit: limit
       }
     ]);
 
@@ -357,6 +454,14 @@ exports.getEventSummary = async (req, res, next) => {
       results: eventSummary.length,
       data: {
         eventSummary
+      },
+      pagination: {
+        currentPage: page,
+        totalPages: totalPages,
+        totalEvents: totalEvents,
+        eventsPerPage: limit,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
       }
     });
   } catch (error) {
@@ -364,13 +469,50 @@ exports.getEventSummary = async (req, res, next) => {
   }
 };
 
-// @desc    Get event summary for a specific event
+// @desc    Get event summary for a specific event with pagination for registrations
 // @route   GET /api/v1/events/summary/:eventName
 // @access  Private/Admin
 exports.getSpecificEventSummary = async (req, res, next) => {
   try {
     const { eventName } = req.params;
     
+    // Extract pagination parameters from query (for registrations within the event)
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    // Extract optional filter parameters for registrations
+    const { search, dateFrom, dateTo } = req.query;
+    
+    // Build filter object for registrations
+    let registrationFilter = { eventName: { $regex: eventName, $options: 'i' } };
+    if (search) {
+      registrationFilter.$and = [
+        { eventName: { $regex: eventName, $options: 'i' } },
+        {
+          $or: [
+            { name: { $regex: search, $options: 'i' } },
+            { email: { $regex: search, $options: 'i' } },
+            { phone: { $regex: search, $options: 'i' } }
+          ]
+        }
+      ];
+    }
+    if (dateFrom || dateTo) {
+      registrationFilter.dateOfRegistration = {};
+      if (dateFrom) {
+        registrationFilter.dateOfRegistration.$gte = new Date(dateFrom);
+      }
+      if (dateTo) {
+        registrationFilter.dateOfRegistration.$lte = new Date(dateTo);
+      }
+    }
+
+    // Get total registrations count for this event (for pagination)
+    const totalRegistrations = await EventRecord.countDocuments(registrationFilter);
+    const totalPages = Math.ceil(totalRegistrations / limit);
+
+    // Get basic event summary (not paginated)
     const eventSummary = await EventRecord.aggregate([
       {
         $match: { eventName: { $regex: eventName, $options: 'i' } }
@@ -382,19 +524,7 @@ exports.getSpecificEventSummary = async (req, res, next) => {
           totalAmountPaid: { $sum: { $toDouble: "$amountPaid" } },
           eventDate: { $first: "$eventDate" },
           earliestRegistration: { $min: "$createdAt" },
-          latestRegistration: { $max: "$createdAt" },
-          registrations: {
-            $push: {
-              id: "$_id",
-              name: "$name",
-              email: "$email",
-              phone: "$phone",
-              amountPaid: "$amountPaid",
-              dateOfRegistration: "$dateOfRegistration",
-              createdAt: "$createdAt",
-              eventName: "$eventName"
-            }
-          }
+          latestRegistration: { $max: "$createdAt" }
         }
       },
       {
@@ -406,12 +536,6 @@ exports.getSpecificEventSummary = async (req, res, next) => {
           earliestRegistration: 1,
           latestRegistration: 1,
           avgAmountPerMember: { $divide: ["$totalAmountPaid", "$totalMembers"] },
-          registrations: {
-            $sortArray: {
-              input: "$registrations",
-              sortBy: { createdAt: -1 }
-            }
-          },
           _id: 0
         }
       }
@@ -424,10 +548,30 @@ exports.getSpecificEventSummary = async (req, res, next) => {
       });
     }
 
+    // Get paginated registrations for this event
+    const registrations = await EventRecord.find(registrationFilter)
+      .select('name email phone amountPaid dateOfRegistration createdAt eventName')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const result = {
+      ...eventSummary[0],
+      registrations: registrations
+    };
+
     res.status(200).json({
       status: 'success',
       data: {
-        eventSummary: eventSummary[0]
+        eventSummary: result
+      },
+      pagination: {
+        currentPage: page,
+        totalPages: totalPages,
+        totalRegistrations: totalRegistrations,
+        registrationsPerPage: limit,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
       }
     });
   } catch (error) {
@@ -435,12 +579,37 @@ exports.getSpecificEventSummary = async (req, res, next) => {
   }
 };
 
-// @desc    Get events overview with basic stats
+// @desc    Get events overview with basic stats and pagination
 // @route   GET /api/v1/events/overview
 // @access  Private/Admin
 exports.getEventsOverview = async (req, res, next) => {
   try {
-    const overview = await EventRecord.aggregate([
+    // Extract pagination parameters from query
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    // Extract optional filter parameters
+    const { search, dateFrom, dateTo } = req.query;
+    
+    // Build match stage for filtering
+    let matchStage = {};
+    if (search) {
+      matchStage.eventName = { $regex: search, $options: 'i' };
+    }
+    if (dateFrom || dateTo) {
+      matchStage.dateOfRegistration = {};
+      if (dateFrom) {
+        matchStage.dateOfRegistration.$gte = new Date(dateFrom);
+      }
+      if (dateTo) {
+        matchStage.dateOfRegistration.$lte = new Date(dateTo);
+      }
+    }
+
+    // Get overall totals (not paginated)
+    const overallTotals = await EventRecord.aggregate([
+      ...(Object.keys(matchStage).length > 0 ? [{ $match: matchStage }] : []),
       {
         $group: {
           _id: "$eventName",
@@ -454,49 +623,183 @@ exports.getEventsOverview = async (req, res, next) => {
           _id: null,
           totalEvents: { $sum: 1 },
           totalRegistrations: { $sum: "$totalMembers" },
-          totalRevenue: { $sum: "$totalAmountPaid" },
-          events: {
-            $push: {
-              eventName: "$_id",
-              totalMembers: "$totalMembers",
-              totalAmountPaid: "$totalAmountPaid",
-              eventDate: "$eventDate"
-            }
-          }
+          totalRevenue: { $sum: "$totalAmountPaid" }
+        }
+      }
+    ]);
+
+    const totals = overallTotals[0] || {
+      totalEvents: 0,
+      totalRegistrations: 0,
+      totalRevenue: 0
+    };
+
+    const totalPages = Math.ceil(totals.totalEvents / limit);
+
+    // Get paginated events list
+    const paginatedEvents = await EventRecord.aggregate([
+      ...(Object.keys(matchStage).length > 0 ? [{ $match: matchStage }] : []),
+      {
+        $group: {
+          _id: "$eventName",
+          totalMembers: { $sum: 1 },
+          totalAmountPaid: { $sum: { $toDouble: "$amountPaid" } },
+          eventDate: { $first: "$dateOfRegistration" }
         }
       },
       {
         $project: {
-          totalEvents: 1,
-          totalRegistrations: 1,
-          totalRevenue: 1,
-          avgRevenuePerEvent: { $divide: ["$totalRevenue", "$totalEvents"] },
-          avgMembersPerEvent: { $divide: ["$totalRegistrations", "$totalEvents"] },
-          events: {
-            $sortArray: {
-              input: "$events",
-              sortBy: { eventDate: -1 }
-            }
-          },
+          eventName: "$_id",
+          totalMembers: "$totalMembers",
+          totalAmountPaid: "$totalAmountPaid",
+          eventDate: "$eventDate",
           _id: 0
         }
+      },
+      {
+        $sort: { eventDate: -1 }
+      },
+      {
+        $skip: skip
+      },
+      {
+        $limit: limit
       }
     ]);
 
     res.status(200).json({
       status: 'success',
       data: {
-        overview: overview[0] || {
-          totalEvents: 0,
-          totalRegistrations: 0,
-          totalRevenue: 0,
-          avgRevenuePerEvent: 0,
-          avgMembersPerEvent: 0,
-          events: []
+        overview: {
+          totalEvents: totals.totalEvents,
+          totalRegistrations: totals.totalRegistrations,
+          totalRevenue: totals.totalRevenue,
+          avgRevenuePerEvent: totals.totalEvents > 0 ? totals.totalRevenue / totals.totalEvents : 0,
+          avgMembersPerEvent: totals.totalEvents > 0 ? totals.totalRegistrations / totals.totalEvents : 0,
+          events: paginatedEvents
         }
+      },
+      pagination: {
+        currentPage: page,
+        totalPages: totalPages,
+        totalEvents: totals.totalEvents,
+        eventsPerPage: limit,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
       }
     });
   } catch (error) {
     next(error);
+  }
+};
+
+// @desc    Export event records to Excel
+// @route   GET /api/v1/events/registrations/export-excel
+// @access  Private/Admin
+exports.exportEventRecordsToExcel = async (req, res, next) => {
+  try {
+    // Get all event records
+    const eventRecords = await EventRecord.find().sort({ createdAt: -1 });
+
+    if (eventRecords.length === 0) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'No event records found to export'
+      });
+    }
+
+    // Create a new workbook
+    const workbook = XLSX.utils.book_new();
+
+    // Get unique event names for creating separate sheets
+    const eventNames = [...new Set(eventRecords.map(record => record.eventName))];
+
+    // Create main summary sheet
+    const summaryData = [];
+    let totalRevenue = 0;
+    let totalRegistrations = eventRecords.length;
+
+    eventNames.forEach(eventName => {
+      const eventFilteredRecords = eventRecords.filter(record => record.eventName === eventName);
+      const eventRevenue = eventFilteredRecords.reduce((sum, record) => sum + (record.amountPaid || 0), 0);
+      totalRevenue += eventRevenue;
+      
+      summaryData.push({
+        'Event Name': eventName,
+        'Total Registrations': eventFilteredRecords.length,
+        'Total Revenue': eventRevenue,
+        'Average Revenue per Registration': eventFilteredRecords.length > 0 ? (eventRevenue / eventFilteredRecords.length).toFixed(2) : 0
+      });
+    });
+
+    // Add overall summary at the end
+    summaryData.push({
+      'Event Name': 'TOTAL SUMMARY',
+      'Total Registrations': totalRegistrations,
+      'Total Revenue': totalRevenue,
+      'Average Revenue per Registration': totalRegistrations > 0 ? (totalRevenue / totalRegistrations).toFixed(2) : 0
+    });
+
+    // Create summary worksheet
+    const summaryWorksheet = XLSX.utils.json_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(workbook, summaryWorksheet, 'Summary');
+
+    // Create main data sheet with all event records
+    const mainData = eventRecords.map((record, index) => ({
+      'S.No': index + 1,
+      'Name': record.name || '',
+      'Email': record.email || '',
+      'Phone': record.phone || '',
+      'Event Name': record.eventName || '',
+      'Amount Paid': record.amountPaid || 0,
+      'Registration Date': record.dateOfRegistration ? new Date(record.dateOfRegistration).toLocaleDateString('en-IN') : '',
+      'Created At': record.createdAt ? new Date(record.createdAt).toLocaleDateString('en-IN') : ''
+    }));
+
+    const mainWorksheet = XLSX.utils.json_to_sheet(mainData);
+    XLSX.utils.book_append_sheet(workbook, mainWorksheet, 'All Event Records');
+
+    // Create individual sheets for each event (only if there are multiple events)
+    if (eventNames.length > 1) {
+      eventNames.forEach(eventName => {
+        const eventRecordsData = eventRecords
+          .filter(record => record.eventName === eventName)
+          .map((record, index) => ({
+            'S.No': index + 1,
+            'Name': record.name || '',
+            'Email': record.email || '',
+            'Phone': record.phone || '',
+            'Amount Paid': record.amountPaid || 0,
+            'Registration Date': record.dateOfRegistration ? new Date(record.dateOfRegistration).toLocaleDateString('en-IN') : '',
+            'Created At': record.createdAt ? new Date(record.createdAt).toLocaleDateString('en-IN') : ''
+          }));
+
+        if (eventRecordsData.length > 0) {
+          const eventWorksheet = XLSX.utils.json_to_sheet(eventRecordsData);
+          // Sanitize sheet name (Excel sheet names can't contain certain characters)
+          const sanitizedEventName = eventName.replace(/[\\\/\?\*\[\]]/g, '_').substring(0, 31);
+          XLSX.utils.book_append_sheet(workbook, eventWorksheet, sanitizedEventName);
+        }
+      });
+    }
+
+    // Generate Excel file buffer
+    const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+    // Set response headers for file download
+    const filename = `event_records_${new Date().toISOString().split('T')[0]}.xlsx`;
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+    // Send the Excel file
+    res.send(excelBuffer);
+
+  } catch (error) {
+    console.error('Error exporting event records to Excel:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to export event records to Excel',
+      error: error.message
+    });
   }
 };

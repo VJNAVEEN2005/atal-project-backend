@@ -7,7 +7,8 @@ const {
     getInternshipById,
     deleteInternship,
     getInternshipsByUserId,
-    getInternshipsByEmailId
+    getInternshipsByEmailId,
+    exportInternshipsToExcel
 } = require('../controllers/internshipController');
 const adminAuthentication = require('../middleware/adminAuthentication.js');
 
@@ -18,5 +19,8 @@ router.get('/internship/:internshipId', getInternshipById);
 router.delete('/internship/:internshipId',adminAuthentication, deleteInternship);
 router.get('/internships/user/:userId', getInternshipsByUserId);
 router.get('/internships/email/:emailId', getInternshipsByEmailId);
+
+// export all internships to Excel
+router.get('/internships/export/excel', adminAuthentication, exportInternshipsToExcel);
 
 module.exports = router;

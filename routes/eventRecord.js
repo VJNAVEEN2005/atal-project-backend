@@ -30,6 +30,11 @@ router
   .route('/registrations/bulk')
   .post(eventRecordController.bulkCreateEventRecords);
 
+// Export route
+router
+  .route('/registrations/export/excel')
+  .get(eventRecordController.exportEventRecordsToExcel);
+
 router
   .route('/registrations/:id')
   .get(eventRecordController.getEventRecord)

@@ -9,7 +9,8 @@ const {
     deleteProject,
     getProjectsByUserId,
     getProjectsByEmailId,
-    updateProjectImage
+    showProjectImageById,
+    exportProjectsToExcel
 } = require('../controllers/projectController');
 const adminAuthentication = require('../middleware/adminAuthentication.js');
 
@@ -24,5 +25,11 @@ router.get('/user/:userId/projects', getProjectsByUserId);
 
 // get projects by email ID
 router.get('/email/:emailId/projects', getProjectsByEmailId);
+
+// get project image by ID
+router.get('/project/:projectId/image', showProjectImageById);
+
+// export all projects to Excel
+router.get('/projects/export/excel', adminAuthentication, exportProjectsToExcel);
 
 module.exports = router;
